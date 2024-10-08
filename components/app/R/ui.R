@@ -196,17 +196,22 @@ app_ui <- function(x) {
         .where = "declarations"
       )
 
-      ## offcanvas chatbox
-      div.chirpbutton <- NULL
-      if (opt$ENABLE_CHIRP) {
-        div.chirpbutton <- shiny::actionButton("chirp_button", "Discuss!",
-          width = "auto", class = "quick-button",
-          onclick = "window.open('https://www.reddit.com/r/omicsplayground', '_blank')"
-        )
-      }
+      ## ## offcanvas chatbox
+      ## div.chirpbutton <- NULL
+      ## if (opt$ENABLE_CHIRP) {
+      ##   div.chirpbutton <- shiny::actionButton("chirp_button", "Discuss!",
+      ##     width = "auto", class = "quick-button",
+      ##     onclick = "window.open('https://www.reddit.com/r/omicsplayground', '_blank')"
+      ##   )
+      ## }
 
       div.invitebutton <- InviteFriendUI("invite")
 
+      div.copilotbutton <- NULL
+      if(opt$DEVMODE) {
+        div.copilotbutton <- uiOutput("copilot_button")
+      }
+      
       ## ------------------------- bigPage ----------------------------------
       bigdash::bigPage(
         shiny.i18n::usei18n(i18n),
@@ -258,8 +263,9 @@ app_ui <- function(x) {
             ##   )
             ## ))
           ),
-          div.invitebutton,
-          div.chirpbutton,
+          div.copilotbutton,
+          div.invitebutton,          
+##        div.chirpbutton,
           div(
             id = "mainmenu_help",
             bigdash::navbarDropdown(

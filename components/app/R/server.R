@@ -554,38 +554,24 @@ app_server <- function(input, output, session) {
     if (isTRUE(auth$logged) && has.pgx && !nav.welcome) {
       ## trigger on change of dataset
       pgx.name <- gsub(".*\\/|[.]pgx$", "", PGX$name)
-      tag <- shiny::actionButton(
-        "dataset_click", pgx.name,
-        class = "quick-button",
-        style = "border: none; color: black; font-size: 0.9em;"
-      )
+      tag <- HTML(pgx.name)
     } else {
       tag <- HTML(paste("Omics Playground", VERSION))
     }
     tag
   })
 
-  observeEvent(input$dataset_click, {
-    shiny::req(PGX$name)
-    pgx.name <- gsub(".*\\/|[.]pgx$", "", PGX$name)
-    fields <- c("name", "datatype", "description", "date")
-    fields <- intersect(fields, names(PGX))
-    body <- ""
-    for (f in fields) {
-      txt1 <- paste0("<b>", f, ":</b>&nbsp; ", PGX[[f]], "<br>")
-      body <- paste(body, txt1)
-    }
-    shiny::showModal(shiny::modalDialog(
-      title = pgx.name,
-      div(HTML(body), style = "font-size: 1.1em;"),
-      footer = NULL,
-      size = "l",
-      easyClose = TRUE,
-      fade = FALSE
-    ))
-  })
+  if(opt$DEVMODE) {
 
-
+    output$copilot_button <- renderUI({
+      if(is.null(PGX$X)) return(NULL)
+      div.chirpbutton <- shiny::actionButton(
+        "copilot_click", "Copilot",
+        width = "auto", class = "quick-button"
+      )
+    })
+    OmicsChatServer("chat", pgx=PGX, input.click = reactive(input$copilot_click))
+  }
   ## count the number of times a navtab is clicked during the session
   nav <- reactiveValues(count = c())
   observeEvent(input$nav, {
