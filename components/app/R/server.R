@@ -562,15 +562,14 @@ app_server <- function(input, output, session) {
   })
 
   if(opt$DEVMODE) {
-
     output$copilot_button <- renderUI({
-      if(is.null(PGX$X)) return(NULL)
+##      if(is.null(PGX$X)) return(NULL)
       div.chirpbutton <- shiny::actionButton(
         "copilot_click", "Copilot",
         width = "auto", class = "quick-button"
       )
     })
-    OmicsChatServer("chat", pgx=PGX, input.click = reactive(input$copilot_click))
+    CopilotServer("chat", pgx=PGX, input.click = reactive(input$copilot_click))
   }
   ## count the number of times a navtab is clicked during the session
   nav <- reactiveValues(count = c())
