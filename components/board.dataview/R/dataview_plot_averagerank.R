@@ -40,15 +40,17 @@ dataview_plot_averagerank_server <- function(id,
                                              info = list(),
                                              watermark = FALSE) {
   moduleServer(id, function(input, output, session) {
+
     plot_data <- shiny::reactive({
       shiny::req(pgx$X, pgx$Y)
-      shiny::req(r.gene())
-
+      ## shiny::req(r.gene())
+      
       ## dereference reactives
       gene <- r.gene()
       samples <- r.samples()
       data_type <- r.data_type()
-
+      
+      if(is.null(gene) || gene == "") return(NULL)
       if (!all(samples %in% colnames(pgx$X))) {
         return(NULL)
       }

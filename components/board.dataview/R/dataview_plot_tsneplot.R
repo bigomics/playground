@@ -44,15 +44,29 @@ dataview_plot_tsne_server <- function(id,
     plot_dl <- reactiveValues()
 
     plot_data <- shiny::reactive({
+
+      dbg("[dataview_plot_tsne] plot_data reacted!")
+      
       shiny::req(pgx$X, pgx$Y, pgx$genes, pgx$counts, pgx$samples, pgx$tsne2d)
 
+      dbg("[dataview_plot_tsne] 0!")
+      
       ## dereference reactives
       gene <- r.gene()
       samples <- r.samples()
       data_type <- r.data_type()
       groupby <- r.groupby()
+      
+      dbg("[dataview_plot_tsne] data_type = ", data_type)
+      dbg("[dataview_plot_tsne] gene = ", gene)
+      if(is.null(gene) || gene=="") return(NULL)
+
+      dbg("[dataview_plot_tsne] 1!")
+      
       shiny::req(gene, data_type)
 
+      dbg("[dataview_plot_tsne] 2!")
+      
       if (samples[1] == "") samples <- colnames(pgx$X)
       if (!all(samples %in% colnames(pgx$X))) {
         return(NULL)

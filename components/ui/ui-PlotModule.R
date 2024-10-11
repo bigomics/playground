@@ -37,8 +37,9 @@ PlotModuleUI <- function(id,
                          show.ai = FALSE) {
   ns <- shiny::NS(id)
 
+##  dbg("[PlotModuleUI] ns.id = ",ns(id))
+  
   ## ------------ only when DEVMODE ---------------
-  dbg("[PlotModuleUI] opt$DEVMODE = ",opt$DEVMODE)
   show.ai <- (show.ai && opt$DEVMODE)
 
   
@@ -329,11 +330,11 @@ PlotModuleUI <- function(id,
     ),
     shiny::div(card_buttons, class = "px-2"),
     header_buttons,
-    shiny::div(class = "ai-button", title = "AI", ai.button),
-    info.button,
-    options.button,
-    shiny::div(class = "download-button", title = "download", dload.button),    
-    shiny::div(class = "zoom-button", title = "zoom", zoom.button)
+    shiny::div(class = "ai-button", title = "AI assistant", ai.button),
+    shiny::div(class = "info-button", title = "Plot information", info.button),
+    shiny::div(class = "options-button", title = "Plot options", options.button),        
+    shiny::div(class = "download-button", title = "Download plot", dload.button),    
+    shiny::div(class = "zoom-button", title = "Zoom to full screen", zoom.button)
   )
 
   ## ------------------------------------------------------------------------
@@ -1011,14 +1012,15 @@ PlotModuleServer <- function(id,
         info2 <- lapply(info, function(a) paste(unlist(a),collapse="; "))
 
         ## add table data to context (check if it is not too big!!!)
-        dbg("[ui-PlotModule]  is.null(csvFunc) = ", is.null(csvFunc))
-        ## dbg("[ui-PlotModule]  class(csvFunc()) = ", class(csvFunc()))  ## HANGS!!!
-        if(FALSE && !is.null(csvFunc)) {
+        dbg("[ui-PlotModule]  id = ", id)
+        dbg("[ui-PlotModule]  ns.id = ", ns(id))
+
+        if(FALSE && !is.null(csvFunc) && !is.null(csvFunc())) {
           ## SOME BUG!!! It hangs here!!!!
           data <- csvFunc()
           if (is.list(data) && !is.data.frame(data)) data <- data[[1]]
           dbg("[ui-PlotModule] dim(data_table) = ", dim(data))
-          if( FALSE && nrow(data) < 20 && NCOL(data) < 20) {
+          if( !is.null(dim(data)) && nrow(data) < 100 && NCOL(data) < 100) {
             dbg("[ui-PlotModule] adding datatable to context")
             info2$data <- paste(as.character(
               knitr::kable(data,format="markdown")),collapse="\n")
