@@ -24,18 +24,20 @@ html {
         box-shadow: 10px 10px 30px #999;
         display: flex !important;
         margin: auto;
-        }
-
-    .modal-dialog.modal-lg {
-        width: 720px;
         justify-content: center;
         align-items: center;
     }
 
+    .modal-dialog.modal-xl {
+        width: 1440px;
+    }
+
+    .modal-dialog.modal-lg {
+        width: 720px;
+    }
+    
     .modal-dialog.modal-sm {
         width: 300px;
-        justify-content: center;
-        align-items: center;
     }
     
     .modal-footer .btn {
