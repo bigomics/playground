@@ -67,6 +67,11 @@ upload_table_preview_samples_server <- function(
     output$table_samples <- shiny::renderUI({
       action_buttons <- div(
         style = "display: flex; justify-content: left; margin-bottom: 8px;",
+        shiny::actionButton(
+          ns("create_from_samplenames"),
+          "Create from sample names",
+          class = "btn-sm btn-outline-primary m-1"
+        ),
         div(
           if (!is.null(uploaded$samples.csv)) {
             shiny::actionButton(
@@ -82,13 +87,11 @@ upload_table_preview_samples_server <- function(
             )
           }
         ),
-        div(
-          shiny::actionButton(
-            ns("check_documentation_samples"),
-            "Read documentation",
-            class = "btn-sm btn-outline-primary m-1",
-            onclick = "window.open('https://omicsplayground.readthedocs.io/en/latest/dataprep/samples/', '_blank')"
-          )
+        shiny::actionButton(
+          ns("check_documentation_samples"),
+          "Read documentation",
+          class = "btn-sm btn-outline-primary m-1",
+          onclick = "window.open('https://omicsplayground.readthedocs.io/en/latest/dataprep/samples/', '_blank')"
         )
       )
 
@@ -322,6 +325,12 @@ upload_table_preview_samples_server <- function(
 
     observeEvent(input$load_example, {
       uploaded$samples.csv <- playbase::SAMPLES
+    })
+
+    observeEvent(input$create_from_samplenames, {
+      counts <- uploaded$counts.csv
+      samples <- playbase::createSampleInfoFromNames(colnames(counts)) 
+      uploaded$samples.csv <- samples
     })
 
     TableModuleServer(

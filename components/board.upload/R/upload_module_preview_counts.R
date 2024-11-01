@@ -185,7 +185,8 @@ upload_table_preview_counts_server <- function(
     output$histogram <- renderPlot({
       counts <- checked_matrix()
       shiny::req(counts)
-      xx <- log2(1 + counts)
+      ##xx <- log2(1 + counts)
+      xx <- log2(pmax(counts, 0))      
       if (nrow(xx) > 1000) xx <- xx[sample(1:nrow(xx), 1000), , drop = FALSE]
       suppressWarnings(dc <- data.table::melt(xx))
       dc$value[dc$value == 0] <- NA

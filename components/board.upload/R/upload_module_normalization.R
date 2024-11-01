@@ -722,12 +722,6 @@ upload_module_normalization_server <- function(
           shiny::checkboxInput(ns("outlier_shownames"), "show sample names", FALSE)
         )
 
-        bec.options <- tagList(
-          shiny::radioButtons(ns("bec_plottype"), "Plot type:", c("pca", "tsne", "heatmap"),
-            inline = TRUE
-          )
-        )
-
         navmenu <- tagList(
           bslib::card(bslib::card_body(
             style = "padding: 0px;",
