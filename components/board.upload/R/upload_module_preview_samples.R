@@ -52,6 +52,7 @@ upload_table_preview_samples_server <- function(
         extensions = c("Buttons", "Scroller"),
         plugins = "scrollResize",
         selection = list(mode = "single", target = "column", selected = 1),
+        editable = TRUE,
         options = list(
           dom = "lfrtip",
           scroller = TRUE,
@@ -67,31 +68,38 @@ upload_table_preview_samples_server <- function(
     output$table_samples <- shiny::renderUI({
       action_buttons <- div(
         style = "display: flex; justify-content: left; margin-bottom: 8px;",
-        div(
-          if (!is.null(uploaded$samples.csv)) {
-            shiny::actionButton(
-              ns("remove_samples"),
-              "Cancel",
-              icon = icon("trash-can"),
-              class = "btn-sm btn-outline-danger m-1"
-            )
-          } else {
+        if (!is.null(uploaded$samples.csv)) {
+          shiny::actionButton(
+            ns("remove_samples"),
+            "Cancel",
+            icon = icon("trash-can"),
+            class = "btn-sm btn-outline-danger m-1"
+          )
+        } else {
+          tagList(
             shiny::actionButton(
               ns("load_example"), "Load example data",
               class = "btn-sm btn-outline-primary m-1"
+            ),
+            shiny::actionButton(
+              ns("create_from_samplenames"),
+              "Create from sample names",
+              class = "btn-sm btn-outline-primary m-1"
             )
-          }
-        ),
-        div(
-          shiny::actionButton(
-            ns("check_documentation_samples"),
-            "Read documentation",
-            class = "btn-sm btn-outline-primary m-1",
-            onclick = "window.open('https://omicsplayground.readthedocs.io/en/latest/dataprep/samples/', '_blank')"
           )
+        },
+        shiny::actionButton(
+          ns("check_documentation_samples"),
+          "Read documentation",
+          class = "btn-sm btn-outline-primary m-1",
+          onclick = "window.open('https://omicsplayground.readthedocs.io/en/latest/dataprep/samples/', '_blank')"
         )
       )
-
+      
+      table_options = tagList(
+        shiny::textInput(ns("var_names"),"Column names:", value="var1;var2")
+      )
+      
       div(
         bslib::as_fill_carrier(),
         if (is.null(uploaded$samples.csv)) {
@@ -122,6 +130,7 @@ upload_table_preview_samples_server <- function(
               col_widths = c(8, 4),
               TableModuleUI(
                 ns("samples_datasets"),
+                options = table_options,
                 width = width,
                 height = height,
                 title = title,
@@ -132,15 +141,16 @@ upload_table_preview_samples_server <- function(
               ),
               bslib::card(
                 bslib::navset_pill(
+                  ## fillable = TRUE,  ## not available???
                   bslib::nav_panel(
                     title = "UMAP",
                     br(),
-                    plotOutput(ns("umap"), height = "500px")
+                    plotOutput(ns("umap"), height = "450px")
                   ),
                   bslib::nav_panel(
                     title = "Distribution",
                     br(),
-                    plotOutput(ns("phenotype_stats"), height = "500px")
+                    plotOutput(ns("phenotype_stats"), height = "450px")
                   )
                 )
               )
@@ -302,6 +312,8 @@ upload_table_preview_samples_server <- function(
         )
       } else {
         uploaded$samples.csv <- df
+        varnames <- paste(colnames(df),collapse=";")
+        shiny::updateTextInput(session, "var_names", value=varnames)
       }
     })
 
@@ -339,6 +351,16 @@ upload_table_preview_samples_server <- function(
       uploaded$samples.csv <- playbase::SAMPLES
     })
 
+    observeEvent(input$create_from_samplenames, {
+      counts <- uploaded$counts.csv
+      samples <- playbase::createSampleInfoFromNames(colnames(counts)) 
+      uploaded$samples.csv <- samples
+    })
+
+    observeEvent(input$var_names, {
+      dbg("[upload_table_preview_samples_server] input$var_names = ", input$var_names)
+    })
+    
     TableModuleServer(
       "samples_datasets",
       func = table.RENDER,
