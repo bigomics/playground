@@ -186,7 +186,9 @@ upload_table_preview_counts_server <- function(
       counts <- checked_matrix()
       shiny::req(counts)
       ##xx <- log2(1 + counts)
-      xx <- log2(pmax(counts, 0))      
+      xx <- log2(pmax(counts, 1e-4))      
+      # Add seed to make it deterministic
+      set.seed(123)
       if (nrow(xx) > 1000) xx <- xx[sample(1:nrow(xx), 1000), , drop = FALSE]
       suppressWarnings(dc <- data.table::melt(xx))
       dc$value[dc$value == 0] <- NA
@@ -243,7 +245,8 @@ upload_table_preview_counts_server <- function(
       }
 
       # if counts not in file name, give warning and return
-      if (!any(grepl("count|expression|abundance|params.rdata", tolower(input$counts_csv$name)))) {
+      if (!any(grepl("count|expression|abundance|concentration|params.rdata",
+                     tolower(input$counts_csv$name)))) {
         shinyalert::shinyalert(
           title = tspan("Counts not in filename.", js = FALSE),
           text = tspan("Please make sure the file name contains 'counts', such as counts_dataset.csv or counts.csv.", js = FALSE),
@@ -268,26 +271,68 @@ upload_table_preview_counts_server <- function(
         )
       }
 
-      sel <- grep("count|expression|abundance", tolower(input$counts_csv$name))
+      sel <- grep("count|expression|abundance|concentration", tolower(input$counts_csv$name))
       if (length(sel)) {
-        df <- playbase::read_counts(input$counts_csv$datapath[sel[1]])
-        uploaded$counts.csv <- df
+        df <- tryCatch(
+          {
+            playbase::read_counts(input$counts_csv$datapath[sel[1]])
+          },
+          error = function(w) {
+            NULL
+          }
+        )
+        if (is.null(df)) {
+          data_error_modal(
+            path = input$counts_csv$datapath[sel[1]],
+            data_type = "counts"
+          )
+        } else {
+          uploaded$counts.csv <- df
 
-        ## if counts file contains annotation
-        af <- playbase::read_annot(input$counts_csv$datapath[sel[1]])
-        uploaded$annot.csv <- af
+          # if counts file contains annotation
+          af <- playbase::read_annot(input$counts_csv$datapath[sel[1]])
+          uploaded$annot.csv <- af
+        }
       }
 
       sel <- grep("samples", tolower(input$counts_csv$name))
       if (length(sel)) {
-        df <- playbase::read_samples(input$counts_csv$datapath[sel[1]])
-        uploaded$samples.csv <- df
+        df <- tryCatch(
+          {
+            playbase::read_samples(input$counts_csv$datapath[sel[1]])
+          },
+          error = function(w) {
+            NULL
+          }
+        )
+        if (is.null(df)) {
+          data_error_modal(
+            path = input$counts_csv$datapath[sel[1]],
+            data_type = "samples"
+          )
+        } else {
+          uploaded$samples.csv <- df
+        }
       }
 
       sel <- grep("contrast|comparison", tolower(input$counts_csv$name))
       if (length(sel)) {
-        df <- playbase::read_contrasts(input$counts_csv$datapath[sel[1]])
-        uploaded$contrasts.csv <- df
+        df <- tryCatch(
+          {
+            playbase::read_contrasts(input$counts_csv$datapath[sel[1]])
+          },
+          error = function(w) {
+            NULL
+          }
+        )
+        if (is.null(df)) {
+          data_error_modal(
+            path = input$counts_csv$datapath[sel[1]],
+            data_type = "contrasts"
+          )
+        } else {
+          uploaded$contrasts.csv <- df
+        }
       }
 
       sel <- grep("params.RData", input$counts_csv$name)

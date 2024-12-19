@@ -51,7 +51,7 @@ LoadingUI <- function(id) {
         DatasetReportUI(id = ns("generate_report"))
       ),
       bslib::layout_columns(
-        col_widths = c(7, 5),
+        col_widths = c(8, 4),
         loading_table_datasets_ui(
           ns("pgxtable"),
           title = "Available datasets",
@@ -87,13 +87,14 @@ LoadingUI <- function(id) {
       height = "calc(100vh - 180px)",
       bs_alert("This panel shows all <b>Public datasets</b>. You can select a public dataset and click <b>Import Dataset</b> to copy that dataset to your library for further analysis. The <b>Signature t-SNE</b> shows similarity clustering of fold-change signatures using t-SNE.", translate = FALSE, html = TRUE),
       bslib::layout_columns(
-        col_widths = c(7, 5),
+        col_widths = c(8, 4),
         loading_table_datasets_public_ui(
           ns("pgxtable_public"),
           title = "Public datasets",
           info.text = "This table shows available public datasets within the platform. For each dataset, it reports a brief description as well as the total number of samples, genes, gene sets (or pathways), corresponding phenotypes and the creation date.",
           caption = "Table with public datasets available in the platform.",
-          height = c("calc(100vh - 330px)", 700),
+          ##height = c("calc(100vh - 330px)", 700),
+          height = c("100%", 700),
           width = c("100%", "100%")
         ),
         loading_tsne_ui(
@@ -109,7 +110,8 @@ LoadingUI <- function(id) {
           ),
           info.extra_link = "https://omicsplayground.readthedocs.io/en/latest/methods/#clustering",
           caption = "Similarity clustering of fold-change signatures colored by data sets using t-SNE.",
-          height = c("calc(100vh - 330px)", 700),
+          ##height = c("calc(100vh - 330px)", 700),
+          height = c("100%", 700),
           width = c("auto", "100%")
         )
       ) ## end of 7fr-5fr

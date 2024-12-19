@@ -10,7 +10,7 @@ UploadBoard <- function(id,
                         reload_pgxdir,
                         load_uploaded_data,
                         recompute_pgx,
-                        recompute_info,
+                        ## recompute_info,  ## not used
                         inactivityCounter,
                         new_upload) {
   moduleServer(id, function(input, output, session) {
@@ -32,6 +32,8 @@ UploadBoard <- function(id,
     selected_contrast_input <- shiny::reactiveVal(TRUE)
     reset_upload_text_input <- shiny::reactiveVal(0)
     probetype <- shiny::reactiveVal("running")
+
+    compute_settings <- shiny::reactiveValues()
 
     # add task to detect probetype using annothub
     checkprobes_task <- ExtendedTask$new(function(organism, datatype, probes) {
@@ -690,7 +692,7 @@ UploadBoard <- function(id,
     })
 
     observeEvent(input$start_upload, {
-      recompute_pgx(NULL) ## need to reset
+      recompute_pgx(NULL) ## need to reset ???
     })
 
     observeEvent(c(input$start_upload, recompute_pgx()), {
@@ -970,12 +972,10 @@ UploadBoard <- function(id,
               uploaded$samples.csv <- pgx$samples
               uploaded$contrasts.csv <- pgx$contrast
               uploaded$counts.csv <- pgx$counts
-              recompute_info(
-                list(
-                  "name" = pgx$name,
-                  "description" = pgx$description
-                )
-              )
+
+              ## compute_info(list( "name" = pgx$name,"description" = pgx$description))
+              compute_settings$name <- pgx$name
+              compute_settings$description <- pgx$description
             }
           } else {
             shinyalert::shinyalert(
@@ -1041,30 +1041,32 @@ UploadBoard <- function(id,
 
         # detect_probetypes return NULL if no probetype is found
         # across a given organism if NULL, probetype matching failed
-        e1 <- is.null(detected$probetype[organism])
-        e2 <- is.na(detected$probetype[organism])
-        e3 <- !(organism %in% detected$species)
-        task_failed <- (e1 || e2 || e3)
+        e0 <- length(detected)==0
+        e1 <- is.null(detected[[organism]])
+        e2 <- all(is.na(detected[[organism]]))
+        e3 <- !(organism %in% names(detected))
+        task_failed <- (e0 || e1 || e2 || e3)
         if (task_failed) {
           # handle probetype mismatch failures: assign "error" to detected_probetype
           detected_probetype <- "error"
-          alt.species <- paste(detected$species, collapse = " or ")
+          detected_species <- names(detected)
+          alt.species <- paste(detected_species, collapse = " or ")
           if (length(alt.species)) {
             alt.species <- paste0("<b>", alt.species, "</b>")
             # check if ANY organism matched the probes, if yes add a hint to the user
-            if (length(detected$species) >= 1) {
+            if (length(detected_species) >= 1) {
               alt.text <- paste0("Are these perhaps ", alt.species, "?")
             }
             if (upload_datatype() == "metabolomics") {
               # overwrite alt.text for metabolomics
-              alt.text <- paste0(c("ChEBI (recommended)", "HMDB", "PubChem", "KEGG", "METLIN"), collapse = ", ")
+              alt.text <- "ChEBI (recommended), HMDB, PubChem, KEGG"
               alt.text <- paste0("<b>", alt.text, "</b>")
               alt.text <- paste0("Valid probes are: ", alt.text, ".")
             }
           }
         } else {
-          # handle probetype matching success: assign detected probetype to detected_probetype
-          detected_probetype <- detected$probetype[organism]
+          # handle success: assign detected probetype to detected_probetype
+          detected_probetype <- paste(detected[[organism]],collapse='+')
         }
 
         probetype(detected_probetype) ## set RV
@@ -1198,6 +1200,10 @@ UploadBoard <- function(id,
         compute_input$X <- normalized$X()
         compute_input$impX <- normalized$impX()
         compute_input$norm_method <- normalized$norm_method()
+
+        compute_settings$imputation_method <- normalized$imputation_method()
+        compute_settings$bc_method <- normalized$bc_method()
+        compute_settings$remove_outliers <- normalized$remove_outliers()
       }
     })
 
@@ -1207,6 +1213,9 @@ UploadBoard <- function(id,
       countsX = reactive(compute_input$X),
       impX = reactive(compute_input$impX),
       norm_method = shiny::reactive(compute_input$norm_method),
+      #      imputation_method = shiny::reactive(compute_input$imputation_method),
+      #      bc_method = shiny::reactive(compute_input$bc_method),
+      #      remove_outliers = shiny::reactive(compute_input$remove_outliers),
       samplesRT = shiny::reactive(checked_samples_counts()$SAMPLES),
       contrastsRT = modified_ct,
       annotRT = shiny::reactive(checked_annot()$matrix),
@@ -1217,7 +1226,7 @@ UploadBoard <- function(id,
       create_raw_dir = create_raw_dir,
       alertready = FALSE,
       height = "100%",
-      recompute_info = recompute_info,
+      compute_settings = compute_settings,
       inactivityCounter = inactivityCounter,
       upload_wizard = reactive(input$upload_wizard),
       upload_name = upload_name,

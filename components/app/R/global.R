@@ -239,11 +239,18 @@ if (opt$HUBSPOT_CHECK) {
 BOARDS <- c(
   "welcome", "load", "upload", "dataview", "clustersamples", "clusterfeatures",
   "diffexpr", "enrich", "isect", "pathway", "wordcloud", "drug", "sig", "cell",
-  "corr", "bio", "cmap", "wgcna", "tcga", "comp", "user", "pcsf"
+  "corr", "bio", "cmap", "wgcna", "tcga", "comp", "user", "pcsf",
+  "multiomics"
 )
-if (is.null(opt$BOARDS_ENABLED)) opt$BOARDS_ENABLED <- BOARDS
-ENABLED <- array(rep(TRUE, length(BOARDS)), dimnames = list(BOARDS))
+##if (is.null(opt$BOARDS_ENABLED)) opt$BOARDS_ENABLED <- BOARDS
+opt$BOARDS_ENABLED <- BOARDS
 ENABLED <- array(BOARDS %in% opt$BOARDS_ENABLED, dimnames = list(BOARDS))
+
+MODULES <- c('Welcome','Datasets','DataView','Clustering','Expression',
+             'GeneSets','Compare','SystemsBio','MultiOmics')
+if (is.null(opt$MODULES_ENABLED)) opt$MODULES_ENABLED <- MODULES
+MODULES_ENABLED <- array(MODULES %in% opt$MODULES_ENABLED, dimnames = list(MODULES))
+
 
 ## ------------------------------------------------
 ## SESSION CONTROL
@@ -276,3 +283,7 @@ library(shiny.i18n)
 DICTIONARY <- file.path(FILES, "translation.json")
 i18n <- shiny.i18n::Translator$new(translation_json_path = DICTIONARY)
 i18n$set_translation_language("RNA-seq")
+
+## Setup reticulate
+##reticulate::use_virtualenv("reticulate")
+

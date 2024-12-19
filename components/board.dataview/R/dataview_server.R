@@ -82,31 +82,12 @@ DataViewBoard <- function(id, pgx, labeltype = shiny::reactive("feature")) {
       },
       {
         shiny::req(input$data_type)
-
-
-        # X should be labelled as features, so rownames(counts) and rownames(x) shoud match (???)
+        
         features <- rownames(pgx$X)
-        # if (input$data_type %in% c("counts", "abundance")) {
-        #   features <- rownames(pgx$counts)
-        # } else {
-        #   ## log2CPM
-        #   features <- rownames(pgx$X)
-        # }
-
-        ## gene filter.
         fc2 <- rowMeans(playbase::pgx.getMetaFoldChangeMatrix(pgx)$fc**2, na.rm = TRUE)
         features <- intersect(names(sort(-fc2)), features) ## most var gene??
         sel.feature <- features[1]
         features <- sort(features)
-        p1 <- head(rownames(pgx$genes), 1000)
-        p2 <- head(pgx$genes$symbol, 1000)
-        by.symbol <- mean(p1 == p2, na.rm = TRUE) > 0.8
-        if (0 && !by.symbol) {
-          gene <- pgx$genes[match(features, rownames(pgx$genes)), "symbol"]
-          feature_gene <- paste0(gene, "_", features)
-          names(features) <- feature_gene
-          features <- features[order(names(features))]
-        }
         i <- match(sel.feature, features)
         features <- c(features[i], features[-i])
         if (length(features) > 1000) {
@@ -149,8 +130,15 @@ DataViewBoard <- function(id, pgx, labeltype = shiny::reactive("feature")) {
       samples <- colnames(pgx$X)
 
       if (!is.null(input$data_samplefilter)) {
-        samples <- playbase::selectSamplesFromSelectedLevels(
-          pgx$Y, input$data_samplefilter
+        samples <- tryCatch(
+          {
+            playbase::selectSamplesFromSelectedLevels(
+              pgx$samples, input$data_samplefilter
+            )
+          },
+          error = function(w) {
+            NULL
+          }
         )
       }
       # validate samples
@@ -356,6 +344,10 @@ DataViewBoard <- function(id, pgx, labeltype = shiny::reactive("feature")) {
         summed.counts <- t(sapply(gset, function(f) {
           Matrix::colSums(counts[which(gg %in% f), , drop = FALSE], na.rm = TRUE)
         }))
+        if (length(total.counts) == 1) {
+          summed.counts <- t(summed.counts)
+          colnames(summed.counts) <- colnames(counts)
+        }
         prop.counts <- 100 * t(t(summed.counts) / total.counts)
 
         ## N. of detected features per sample or group AZ
@@ -380,8 +372,9 @@ DataViewBoard <- function(id, pgx, labeltype = shiny::reactive("feature")) {
 
         ## align
         ss <- names(total.counts)
-        prop.counts <- prop.counts[, ss, drop = FALSE]
-        counts <- counts[, ss, drop = FALSE]
+        ss2 <- match(ss, colnames(prop.counts))
+        prop.counts <- prop.counts[, ss2, drop = FALSE]
+        counts <- counts[, ss2, drop = FALSE]
         if (any(pgx$X[, samples, drop = FALSE] < 0, na.rm = TRUE)) {
           offset <- 1e-6
         } else {
