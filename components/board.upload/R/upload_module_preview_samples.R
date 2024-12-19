@@ -95,11 +95,7 @@ upload_table_preview_samples_server <- function(
           onclick = "window.open('https://omicsplayground.readthedocs.io/en/latest/dataprep/samples/', '_blank')"
         )
       )
-      
-      table_options = tagList(
-        shiny::textInput(ns("var_names"),"Column names:", value="var1;var2")
-      )
-      
+            
       div(
         bslib::as_fill_carrier(),
         if (is.null(uploaded$samples.csv)) {
@@ -130,7 +126,6 @@ upload_table_preview_samples_server <- function(
               col_widths = c(8, 4),
               TableModuleUI(
                 ns("samples_datasets"),
-                options = table_options,
                 width = width,
                 height = height,
                 title = title,
@@ -312,8 +307,6 @@ upload_table_preview_samples_server <- function(
         )
       } else {
         uploaded$samples.csv <- df
-        varnames <- paste(colnames(df),collapse=";")
-        shiny::updateTextInput(session, "var_names", value=varnames)
       }
     })
 
@@ -354,12 +347,38 @@ upload_table_preview_samples_server <- function(
     observeEvent(input$create_from_samplenames, {
       counts <- uploaded$counts.csv
       samples <- playbase::createSampleInfoFromNames(colnames(counts)) 
-      uploaded$samples.csv <- samples
+
+      ## create textinput for each column name
+      varnames <- paste0("varname",1:ncol(samples))
+      vartags <- tagList()
+      for(i in 1:length(varnames)) {
+        vartags[[i]] <- shiny::textInput(
+          ns(varnames[i]), paste("Column ",i,":"),
+          value = colnames(samples)[i])
+      }
+      ##vartags <- shiny::tagList(!!!vartags)
+      getVarnames <- function() {
+        sapply(1:ncol(samples), function(i) input[[varnames[i]]])
+      }
+      
+      shinyalert::shinyalert(
+        title = "",
+        text = tagList(
+          paste("Your sample names look like: '",  colnames(samples)[1],
+                "'. Please provide variable names:<br>"),
+          vartags),
+        type = "",
+        html = TRUE,
+        size = "xs",
+        callbackR = function(x) {
+          message("naming variable in samples.csv.")
+          colnames(samples) <- getVarnames()
+          uploaded$samples.csv <- samples
+        }
+      )
+      ## uploaded$samples.csv <- samples
     })
 
-    observeEvent(input$var_names, {
-      dbg("[upload_table_preview_samples_server] input$var_names = ", input$var_names)
-    })
     
     TableModuleServer(
       "samples_datasets",
