@@ -186,7 +186,8 @@ upload_table_preview_counts_server <- function(
       counts <- checked_matrix()
       shiny::req(counts)
       ##xx <- log2(1 + counts)
-      xx <- log2(pmax(counts, 1e-4))      
+      eps <- max(counts[counts>0],na.rm=TRUE)  ## automatic prior
+      xx <- log2(counts + eps)      
       # Add seed to make it deterministic
       set.seed(123)
       if (nrow(xx) > 1000) xx <- xx[sample(1:nrow(xx), 1000), , drop = FALSE]
