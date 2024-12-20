@@ -95,7 +95,7 @@ upload_table_preview_samples_server <- function(
           onclick = "window.open('https://omicsplayground.readthedocs.io/en/latest/dataprep/samples/', '_blank')"
         )
       )
-            
+
       div(
         bslib::as_fill_carrier(),
         if (is.null(uploaded$samples.csv)) {
@@ -346,40 +346,36 @@ upload_table_preview_samples_server <- function(
 
     observeEvent(input$create_from_samplenames, {
       counts <- uploaded$counts.csv
-      samples <- playbase::createSampleInfoFromNames(colnames(counts)) 
+      samples <- playbase::createSampleInfoFromNames(colnames(counts))
 
       ## create textinput for each column name
-      varnames <- paste0("varname",1:ncol(samples))
+      varnames <- paste0("varname", 1:ncol(samples))
       vartags <- tagList()
-      for(i in 1:length(varnames)) {
+      for (i in 1:length(varnames)) {
         vartags[[i]] <- shiny::textInput(
-          ns(varnames[i]), paste("Column ",i,":"),
-          value = colnames(samples)[i])
+          ns(varnames[i]), paste("Column ", i, ":"),
+          value = colnames(samples)[i]
+        )
       }
-      ##vartags <- shiny::tagList(!!!vartags)
+      ## vartags <- shiny::tagList(!!!vartags)
       getVarnames <- function() {
         sapply(1:ncol(samples), function(i) input[[varnames[i]]])
       }
-      
-      shinyalert::shinyalert(
-        title = "",
-        text = tagList(
-          paste("Your sample names look like: '",  colnames(samples)[1],
-                "'. Please provide variable names:<br>"),
-          vartags),
-        type = "",
-        html = TRUE,
-        size = "xs",
-        callbackR = function(x) {
-          message("naming variable in samples.csv.")
-          colnames(samples) <- getVarnames()
-          uploaded$samples.csv <- samples
-        }
+
+      shiny::showModal(
+        shiny::modalDialog(
+          shiny::h4(paste(
+            "Your sample names look like: '", colnames(samples)[1],
+            "'. Please provide variable names:"
+          )),
+          vartags
+        )
       )
+
       ## uploaded$samples.csv <- samples
     })
 
-    
+
     TableModuleServer(
       "samples_datasets",
       func = table.RENDER,
